@@ -92,10 +92,8 @@ const Server = () => {
 
   const httpServer = http.createServer(async (req, res) => {
     const context = createContext(req, res);
-
+    const globalHandler = createGlobalHandler(globalMiddleware);
     for (const route of routes) {
-      const globalHandler = createGlobalHandler(globalMiddleware);
-
       const matchResult = route.match(req);
 
       if (matchResult) {
