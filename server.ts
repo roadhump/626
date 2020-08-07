@@ -22,21 +22,23 @@ export interface Context<TPayload extends any = any> {
   matchResult: MatchResult;
 }
 
-export type Middleware = (ctx: Context) => Context;
+type MaybePromise<T> = Promise<T> | T;
+
+export type Middleware = (ctx: Context) => MaybePromise<Context>;
 export type RouteHandler = Middleware;
 
 type RouteMatching = string | RegExp;
 
 // compose for middleware
 const flowInner = <T extends any[], R>(
-  fn1: (...args: T) => R,
-  ...fns: Array<(a: R) => R>
+  fn1: (...args: T) => MaybePromise<R>,
+  ...fns: Array<(a: R) => MaybePromise<R>>
 ) => {
   const piped = fns.reduce(
-    (prevFn, nextFn) => (value: R) => nextFn(prevFn(value)),
+    (prevFn, nextFn) => async (value: R) => nextFn(await prevFn(value)),
     (value) => value,
   );
-  return (...args: T) => piped(fn1(...args));
+  return async (...args: T) => await piped(await fn1(...args));
 };
 
 const flow = (arr: Array<(...args: any) => any>) => {
